@@ -15,57 +15,56 @@
 // ---- END VEXCODE CONFIGURED DEVICES ----
 
 #include "vex.h"
+#include "cmath"
 
  typedef struct {
 
 	/* 控制因子 */
-	float Kp;
-	float Ki;
-	float Kd;
+	double Kp;
+	double Ki;
+	double Kd;
 
 	/* 设置极限 */
-	float limMin;
-	float limMax;
+	double limMin;
+	double limMax;
 
 	/* 积分上限 */
-	float limMinInt;
-	float limMaxInt;
+	double limMinInt;
+	double limMaxInt;
 
 	/* 各项变量 */
-	float integrator;//积分
-	float prevError;//比例
-	float differentiator;//微分
-	float prevMeasurement;//当前状态
+	double integrator;//积分
+	double prevError;//比例
+	double differentiator;//微分
+	double prevMeasurement;//当前状态
 
-  float out;
+  double out;
 
 
-} PIDController;
-const int FORWARD=1;
-const int REVERSE=0;
+} DistanceController;
 const int UP=1;
 const int DOWN=0;
 const int OPEN=1;
 const int CLOSE=0;
 const double dt=0.001;
-
+DistanceController pid;
 using namespace vex;
 //初始化
-void PIDController_Init(PIDController* pid) {
+void DistanceController_Init(DistanceController* pid) {
 
-	pid->integrator = 0.0f;
-	pid->prevError = 0.0f;//上一次误差
-	pid->differentiator = 0.0f;
+	pid->integrator = 0.0;
+	pid->prevError = 0.0;//上一次误差
+	pid->differentiator = 0.0;
 
 }
 
-float PIDController_Update(PIDController* pid, float target_position, float current_position) {
+double PIDController_Update(DistanceController* pid, double target_position, double current_position) {
 
   //误差标志
-	float error = target_position - current_position;
+	double error = target_position - current_position;
 
 	//比例误差
-	float proportional = pid->Kp * error;
+	double proportional = pid->Kp * error;
 
   //积分误差
 	pid->integrator +=error;
@@ -86,7 +85,9 @@ float PIDController_Update(PIDController* pid, float target_position, float curr
 
 
 	//判断是否达到预期结果
-	pid->out = proportional +pid->Ki* pid->integrator + pid->Kd* pid->differentiator;
+
+
+	pid->out = proportional + pid->Ki* pid->integrator + pid->Kd* pid->differentiator;
 
 	if (pid->out > pid->limMax) {
 
@@ -102,70 +103,87 @@ float PIDController_Update(PIDController* pid, float target_position, float curr
 
 	//返回输出值
   
-	return pid->out;
+	return error;
 }
 
-
-
+//控制机械臂
+void up_arms(double speed)
+{
+  Motorarm.spin(forward,speed,pct);
+}
+void down_arms(double speed)
+{
+   Motorarm.spin(reverse,speed,pct);
+}
+//控制爪子开合
+void open_hands(double speed)
+{
+  Motorhand.spin(forward,speed,pct);
+}
+void close_hands(double speed)
+{
+  Motorhand.spin(reverse,speed,pct);
+}
+//控制机械臂运动
 //directon 转动方向
 //angle_speed 角速度
-//motorname 电机名字
-
-void run(motor* motorname, int direction, float speed)
+void control_arms(double tar_angle,double pre_angle,double angle_speed,int direction)//后续增加其他判断条件
 {
-    if (direction == FORWARD) {
-        motorname->spin(directionType::fwd, speed, velocityUnits::pct);
-    } else if (direction == REVERSE) {
-        motorname->spin(directionType::rev, speed, velocityUnits::pct);
-    }
-}
-void move_arms(double pre_angle,double tar_angle,double speed)
-{
+  double error;
   while(true)
   {
-    if(pre_angle<tar_angle)
+    error=PIDController_Update(&pid, tar_angle, pre_angle);//名字要改
+    if (error > 0.001)
     {
-      Motorarm.spin(forward,speed,pct);
-    }
-    else if(pre_angle>tar_angle)
-    {
-       Motorarm.spin(reverse,speed,pct);
+      if (direction == UP)
+      {
+        up_arms(angle_speed);
+      }
+      else if (direction == DOWN)
+      {
+        down_arms(angle_speed);
+      }
     }
     else
     {
-      Motorarm.stop(hold);
       break;
     }
   }
 }
-void control_hands(double pre_angle,double tar_angle,double speed)
+//控制机械臂停止
+void hold_arms()
 {
+  Motorarm.stop(hold);
+}
+//控制爪子运动
+void control_hands(double tar_angle,double pre_angle,double angle_speed,int direction)
+{
+  double error;
   while(true)
-  {
-    if(pre_angle<=tar_angle)
+  {  
+      error=PIDController_Update(&pid, tar_angle, pre_angle);//名字要改
+      if(error>0.001)
     {
-      Motorhand.spin(forward,speed,pct);
-    }
-    else if(pre_angle>tar_angle)
-    {
-       Motorhand.spin(reverse,speed,pct);
-    }
-    else
-    {
-      Motorhand.stop(hold);
-      break;
+      if(direction==OPEN)
+      {
+        open_hands(angle_speed);
+      }
+      else if(direction==CLOSE)
+      {
+        close_hands(angle_speed);
+      }
+      else
+      {
+        break;
+      }
     }
   }
 }
-
-
-
-
-
-  
-
+//控制爪子停止
+void hold_hands()
+{
+  Motorhand.stop(hold);
 }
-
 int main() {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
