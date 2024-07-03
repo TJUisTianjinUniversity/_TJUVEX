@@ -2,9 +2,9 @@
 #include <cmath>
 using namespace vex;
 
-const double r = 4;      //半径
-const double propotion = 1 / 18 * 2 * M_PI * r; //  (m / 圈)
-const double max_v = 200 / 60 * propotion;
+const double r = 4 / 2;      //半径
+const double propotion =  2 * M_PI * r; //  (m / rad)
+const double max_v = 200.0 / 60 * propotion;
 const double T = 0.001;     //采样间隔
 const double wheelbase = 11.97;   //底盘轴距
 const double tread = 12.13; //底盘轮距
@@ -32,8 +32,8 @@ private:
         {
             l = l / propotion;
             r = r / propotion;
-            LeftMotorGroup1.spin(forward, l, rpm);
-            RightMotorGroup3.spin(forward, r, rpm);
+            LeftMotorGroup.spin(forward, l, rpm);
+            RightMotorGroup.spin(forward, r, rpm);
         }
 
     /*******************************************************************
@@ -49,7 +49,7 @@ private:
         double kp = 1, ki = 1, kd = 1;   //PID的三个常量，明天一定改好
         double chassis_angle = 0;     //初始位置定为0
         double error[3] = {angle, angle, angle};   //误差值，errer[0]为当前时刻
-        double motor_pos = LeftMotorGroup1.position(rev);   //起始时的电机位置
+        double motor_pos = LeftMotorGroup.position(rev);   //起始时的电机位置
         double v = 0;    //控制的速度
 
         while (fabs(error[0]*error[1]*error[2]) > 10e-8){
@@ -67,7 +67,7 @@ private:
             }
 
             //更新位置
-            chassis_angle = propotion * (LeftMotorGroup1.position(rev) - motor_pos) / tread;
+            chassis_angle = propotion * (LeftMotorGroup.position(rev) - motor_pos) / tread;
 
             //间隔 ？？？？？
             task::sleep(T * 1000);
@@ -85,7 +85,7 @@ private:
         double kp = 1, ki = 1, kd = 1;   //PID的三个常量，明天一定改好
         double pos = 0;     //初始位置定为0
         double error[3] = {distance, distance, distance};   //误差值，errer[0]为当前时刻
-        double motor_pos = LeftMotorGroup1.position(rev);   //起始时的电机位置
+        double motor_pos = LeftMotorGroup.position(rev);   //起始时的电机位置
         double v = 0;    //控制的速度
 
         while (fabs(error[0]*error[1]*error[2]) > 10e-8){
@@ -103,7 +103,7 @@ private:
             }
 
             //更新位置
-            pos = propotion * (LeftMotorGroup1.position(rev) - motor_pos);
+            pos = propotion * (LeftMotorGroup.position(rev) - motor_pos);
 
             //间隔 ？？？？？
             task::sleep(T * 1000);
@@ -118,17 +118,17 @@ private:
     *********************************************************************/
     void record()
     {
-        double left_motor[2] = {LeftMotorGroup1.position(rev), LeftMotorGroup1.position(rev)};
-        double right_motor[2] = {RightMotorGroup3.position(rev), RightMotorGroup3.position(rev)};
+        double left_motor[2] = {LeftMotorGroup.position(rev), LeftMotorGroup.position(rev)};
+        double right_motor[2] = {RightMotorGroup.position(rev), RightMotorGroup.position(rev)};
         double v_left, v_right;
 
         while(1){
             left_motor[1] = left_motor[0];
-            left_motor[0] = LeftMotorGroup1.position(rev);
+            left_motor[0] = LeftMotorGroup.position(rev);
             v_left = propotion * (left_motor[0] - left_motor[1]);
 
             right_motor[1] = right_motor[0];
-            right_motor[0] = RightMotorGroup3.position(rev);
+            right_motor[0] = RightMotorGroup.position(rev);
             v_right = propotion * (right_motor[0] - right_motor[1]);
 
             co.x += sin(co.toward) * (v_left + v_right) / 2;
