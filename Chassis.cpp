@@ -51,10 +51,10 @@ void chassis::turn(double angle)
 
         v += (kp + ki + kd) * error[0] - (kp + 2 * kd) * error[1] + kd * error[2];
         if (v > max_v){
-            run(-max_v, max_v);
+            run(max_v, -max_v);
         }
         else{
-            run(-v, v);
+            run(v, -v);
         }
 
         //更新位置
