@@ -13,7 +13,7 @@
 // Controller1          controller                    
 // Motor0               motor         8               
 // Motor1               motor         9               
-// Motor2               motor         10              
+// Motor2               motor         12              
 // Motor3               motor         11              
 // Motorhand            motor         3               
 // Motorarm             motor_group   1, 2            
@@ -42,16 +42,16 @@ int main() {
     int fb,lf;
     /********************************************
     相应Axis对应(两个十字对应手柄左右两边摇杆)：
-            Axis1
+            Axis3
             =
-    Axis2 =====
-            =       Axis3
+    Axis4 =====
+            =       Axis1
                     =
-            Axis4 =====
+            Axis2 =====
                     =
     *********************************************/
     fb=Controller1.Axis3.value();
-    lf=Controller1.Axis4.value();
+    lf=Controller1.Axis1.value();
     fb=abs(fb)>15?fb:0;
     lf=abs(lf)>15?lf:0;
     if(fb!=0||lf!=0) VRUN((fb+lf)*100.0/127.0,(fb-lf)*100.0/127.0);
@@ -60,9 +60,9 @@ int main() {
 
     //按钮
     //arm
-    if(Controller1.ButtonR1.pressing())
+    if(Controller1.ButtonR2.pressing())
       Motorarm.spin(forward,50,pct);//up
-    else if(Controller1.ButtonR2.pressing())
+    else if(Controller1.ButtonR1.pressing())
       Motorarm.spin(reverse,50,pct);//down
     else   
       Motorarm.stop(hold);
