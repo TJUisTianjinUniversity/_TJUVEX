@@ -25,22 +25,29 @@ DistanceController pid1;//定义的pid指针
 
 void Autocontrol()
 {
-  //  chassis c1(0, 0, 90);
-  //  c1.go_to(5, 5);
-  double pre_angle;
+  chassis c1(0, 0, 0);
+  c1.go_to(5, 5);
+  double pre_angle,error;
   double ini_angle=Motorarm.position(deg);
-  double tar_angle=30.0+ini_angle;
+  double tar_angle=20.0+ini_angle;
   while(true)
   {
-  pre_angle=Motorarm.position(deg);
-  control_arms(tar_angle,pre_angle,UP,&pid1);
-  }
+    pre_angle=Motorarm.position(deg);
+    error=tar_angle-pre_angle;
+    if (fabs(error) > 5.0)
+      control_arms(tar_angle,pre_angle,UP,&pid1);
+    else
+    {
+      Motorarm.stop(hold);
+      break;
+    }
+  } 
 }
 
 int main() {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
   Autocontrol();
-  Usercontrol();
+  // Usercontrol();
 
 }
