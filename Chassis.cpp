@@ -79,11 +79,11 @@ void chassis::move(double distance)
     double motor_pos = LeftMotorGroup.position(rev);   //起始时的电机位置
     double v = 0;    //控制的速度
 
-    while (fabs(error[0]*error[1]*error[2]) > 10e-8){
+    while (fabs(error[0]) > 10e-2 && fabs(v) < 10e-2){
         //更新误差值
         error[2] = error[1];
         error[1] = error[0];
-        error[0] = pos;
+        error[0] = distance - pos;
 
         v += (kp + ki + kd) * error[0] - (kp + 2 * kd) * error[1] + kd * error[2];
         if (v > max_v){
