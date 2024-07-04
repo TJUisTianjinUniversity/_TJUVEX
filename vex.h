@@ -23,9 +23,13 @@
   } while (!(condition))
 
 #define repeat(iterations)                                                     \
-  for (int iterator = 0; iterator < iterations; iterator++)
- struct DistanceController{
-
+   for (int iterator = 0; iterator < iterations; iterator++)
+const int UP=1;
+const int DOWN=0;
+const int OPEN=1;
+const int CLOSE=0;
+const double dt=0.001;
+struct DistanceController{
 	/* 控制因子 */
 	double Kp=2;
 	double Ki=0;
@@ -49,24 +53,19 @@
 
 
 };
-const int UP=1;
-const int DOWN=0;
-const int OPEN=1;
-const int CLOSE=0;
-const double dt=0.001;
-void control_arms(double tar_angle,double pre_angle,int direction,DistanceController* pid);//控制机械臂
+void control_arms(double tar_angle,double pre_angle,int direction,DistanceController* spin_con);//控制机械臂
 struct coordinate
 {
     /* data */
     double x;
     double y;
-    double toward;
 };
 
 class chassis{
 
 private:
   coordinate co;
+  double toward;
   void run(double l, double r);
   void turn(double angle);
   void move(double distance);
@@ -74,6 +73,9 @@ private:
   
 public:
   chassis(double x, double y, double toward);
-  void go_to(double x, double y) ;
+  void go_to(double x, double y, int R = 0) ;
   void position(double &x, double &y, double &toward);
 };
+
+void Usercontrol();
+void VRUN(double l, double r);
