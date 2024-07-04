@@ -3,8 +3,8 @@
 using namespace vex;
 
 const double r = 4 / 2;      //半径
-const double propotion =  r; //  (m / rad)
-const double max_v = 200.0 / 60 * propotion * 2 * M_PI;     //(m / s)
+const double propotion =  2 * M_PI * r; //  (m / rev)
+const double max_v = 200.0 / 60 * propotion;     //(m / s)
 const double T = 0.001;     //采样间隔
 //const double wheelbase = 11.97;   //底盘轴距
 const double tread = 12.13; //底盘轮距
@@ -19,8 +19,8 @@ const double tread = 12.13; //底盘轮距
 **************************************************************/
 void chassis::run(double l, double r)
 {
-    l = l / propotion / 2 / M_PI * 60;
-    r = r / propotion / 2 / M_PI * 60;
+    l = l / propotion * 60;
+    r = r / propotion * 60;
     LeftMotorGroup.spin(forward, l, rpm);
     RightMotorGroup.spin(forward, r, rpm);
 }
@@ -35,7 +35,7 @@ void chassis::turn(double angle)
 {
     const double T = 0.001;     //采样间隔
 
-    double kp = 1, ki = 1, kd = 1;   //PID的三个常量，明天一定改好
+    double kp = 2, ki = 0.1, kd = 0.1;   //PID的三个常量，明天一定改好
     double chassis_angle = 0;     //初始位置定为0
     double error[3] = {angle, angle, angle};   //误差值，errer[0]为当前时刻
     double motor_pos = LeftMotorGroup.position(rev);   //起始时的电机位置
@@ -133,11 +133,11 @@ void chassis::record()
 *函数作用：初始化，给定初始的坐标值和朝向
 *函数参量：x-初始位置的横坐标，y-初始位置的纵坐标，toward-初始朝向
 *********************************************************************/
-chassis::chassis(double x, double y, double toward)
+chassis::chassis(double x, double y, double now_toward)
 {
     co.x = x;
     co.y = y;
-    toward = toward;
+    toward = now_toward;
 }
 
 /*******************************************************************
@@ -145,7 +145,7 @@ chassis::chassis(double x, double y, double toward)
 *函数作用：移动到指定坐标
 *函数参量：x-目标位置的横坐标，y-目标位置的纵坐标，R为倒挡，默认为0，要倒车输入非0
 *********************************************************************/
-void chassis::go_to(double x, double y, int R = 0) 
+void chassis::go_to(double x, double y, int R) 
 {
     if (R){
         toward += M_PI;
@@ -153,7 +153,7 @@ void chassis::go_to(double x, double y, int R = 0)
     //转动
     double target_angle;    //目标角度
     //计算目标角度
-    if (co.y > 0) {
+    if (y > 0) {
         if (co.y == y){
             target_angle = M_PI / 2;
         }
