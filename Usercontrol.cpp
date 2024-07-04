@@ -2,6 +2,9 @@
 #include"cmath"
 
 using namespace vex;
+const double angle_max=123.57;
+const double angle_min=1.0;
+const double angle_max_hand=60;
 //底盘移动，四个轮子对应电机
 void VRUN(double l, double r)
 {
@@ -12,8 +15,8 @@ void VRUN(double l, double r)
 }
 void Usercontrol()
 {
-  double ini_angle_control2=Motorarm.position(deg);//arm
-  double ini_angle_control=Motorhand.position(deg);//hand
+  double ini_angle_control2=Motorarm.position(deg);//init_arm
+  double ini_angle_control=Motorhand.position(deg);//init_hand
 
   while(1)
     {
@@ -39,55 +42,36 @@ void Usercontrol()
 
     //按钮
     //arm
-    
-    if(Controller1.ButtonR2.pressing()||Controller1.ButtonR1.pressing())
-    {
-      int r2=0,r1=0;
-      if(Controller1.ButtonR2.pressing())
-      r2=1;
-      else if(Controller1.ButtonR1.pressing())
-      r1=1;
-
-      double pre_angle_control2=Motorarm.position(deg);
-
-      if(pre_angle_control2-ini_angle_control2>0.5){
-        for(;pre_angle_control2-ini_angle_control2<110.0;pre_angle_control2=Motorarm.position(deg))
-        {
-
-          if(r2==1)
-            Motorarm.spin(forward,50,pct);//up
-          else if(r1==1)
-            Motorarm.spin(reverse,50,pct);//down
-          
-        }   
-      }   
-      Motorarm.stop(hold);  
+    double pre_angle_control2=Motorarm.position(deg);
+    // Brain.Screen.printAt(10,40, "init_angle = %f", ini_angle_control2);
+    // Brain.Screen.printAt(10,80, "pre_angle = %f", pre_angle_control2);
+    if(Controller1.ButtonR1.pressing()&&fabs(pre_angle_control2-ini_angle_control2)<angle_max*7)
+    {    
+       Motorarm.spin(forward,50,pct);//up
     }
+    else if(Controller1.ButtonR2.pressing()&&fabs(pre_angle_control2-ini_angle_control2)>angle_min*7)
+    {
+       Motorarm.spin(reverse,50,pct);//down
+    }
+    else   
+      Motorarm.stop(hold);
 
+    double pre_angle_control=Motorhand.position(deg);
     //hand
-    
-    if(Controller1.ButtonL1.pressing()||Controller1.ButtonL2.pressing())
+    Brain.Screen.printAt(10,80, "pre_angle = %f", pre_angle_control);
+    if(Controller1.ButtonL1.pressing()&&fabs(pre_angle_control-ini_angle_control)<angle_max_hand)
     {
-      int l2=0,l1=0;
-      if(Controller1.ButtonL2.pressing())
-      l2=1;
-      else if(Controller1.ButtonL1.pressing())
-      l1=1;
-
-      double pre_angle_control=Motorhand.position(deg);
-      if(pre_angle_control-ini_angle_control>0.5){
-        for(;pre_angle_control-ini_angle_control<75.0;pre_angle_control=Motorhand.position(deg))
-        {
-
-          if (l1==1)
-              Motorhand.spin(forward, 50, pct);//open
-          else if (l2==1)
-              Motorhand.spin(reverse, 50, pct);//close 
-        } 
-      }
-      Motorhand.stop(hold);  
+      if(pre_angle_control-ini_angle_control<50.0)
+          Motorhand.spin(forward,30,pct);//open
     }
-  
+    else if(Controller1.ButtonL2.pressing())
+    {
+      if(pre_angle_control-ini_angle_control>5.0)
+          Motorhand.spin(reverse,20,pct);//close
+    }
+    else 
+      Motorhand.stop(hold);
+
   //微调位置
   if(Controller1.ButtonUp.pressing()){
     LeftMotorGroup.spin(forward,10,pct);

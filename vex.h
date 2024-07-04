@@ -79,3 +79,5 @@ public:
 
 void Usercontrol();
 void VRUN(double l, double r);
+
+double distance_cal;
