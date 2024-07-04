@@ -3,8 +3,8 @@
 using namespace vex;
 
 const double r = 4 / 2;      //半径
-const double propotion =  2 * M_PI * r; //  (m / rad)
-const double max_v = 200.0 / 60 * propotion;
+const double propotion =  r; //  (m / rad)
+const double max_v = 200.0 / 60 * propotion * 2 * M_PI;
 const double T = 0.001;     //采样间隔
 //const double wheelbase = 11.97;   //底盘轴距
 const double tread = 12.13; //底盘轮距
@@ -58,7 +58,7 @@ void chassis::turn(double angle)
         }
 
         //更新位置
-        chassis_angle = propotion * (LeftMotorGroup.position(rev) - motor_pos) / tread;
+        chassis_angle = propotion * (LeftMotorGroup.position(rev) - motor_pos) / tread * 2;
 
         //间隔 ？？？？？
         task::sleep(T * 1000);
@@ -73,7 +73,7 @@ void chassis::turn(double angle)
 *********************************************************************/
 void chassis::move(double distance)
 {
-    double kp = 1, ki = 1, kd = 1;   //PID的三个常量，明天一定改好
+    double kp = 3, ki = 0.1, kd = 0.1;   //PID的三个常量，明天一定改好
     double pos = 0;     //初始位置定为0
     double error[3] = {distance, distance, distance};   //误差值，errer[0]为当前时刻
     double motor_pos = LeftMotorGroup.position(rev);   //起始时的电机位置
