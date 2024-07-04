@@ -63,24 +63,38 @@ void usercontrol()
     
     if(Controller1.ButtonR2.pressing()||Controller1.ButtonR1.pressing())
     {
-      int r2=0,r1=0;
-      if(Controller1.ButtonR2.pressing())
-      r2=1;
-      else if(Controller1.ButtonR1.pressing())
-      r1=1;
-
+     
       double pre_angle_control2=Motorarm.position(deg);
 
       if(pre_angle_control2-ini_angle_control2>0.5){
-        for(;pre_angle_control2-ini_angle_control2<130.0;pre_angle_control2=Motorarm.position(deg))
-        {
+        //for(;pre_angle_control2-ini_angle_control2<130.0;pre_angle_control2=Motorarm.position(deg))
+        //{
 
-          if(r2==1)
-            Motorarm.spin(forward,50,pct);//up
-          else if(r1==1)
-            Motorarm.spin(reverse,50,pct);//down
-          
-        }   
+          if(Controller1.ButtonR2.pressing())
+          {
+            vexMotorVoltageSet(PORT18,10);
+            vexMotorVoltageSet(PORT13,10);
+
+            pre_angle_control2=Motorarm.position(deg);
+            if(pre_angle_control2-ini_angle_control2<130.0){
+              vexMotorVoltageSet(PORT18,0);
+              vexMotorVoltageSet(PORT13,0);
+            }
+              
+          }
+          else if(Controller1.ButtonR1.pressing())
+          {
+            vexMotorVoltageSet(PORT18,-10);
+            vexMotorVoltageSet(PORT13,-10);
+
+            pre_angle_control2=Motorarm.position(deg);
+            if(pre_angle_control2-ini_angle_control2<130.0){
+              vexMotorVoltageSet(PORT18,0);
+              vexMotorVoltageSet(PORT13,0);
+            }
+              
+          }
+        //}   
       }   
       Motorarm.stop(hold);  
     }
@@ -89,22 +103,18 @@ void usercontrol()
     
     if(Controller1.ButtonL1.pressing()||Controller1.ButtonL2.pressing())
     {
-      int l2=0,l1=0;
-      if(Controller1.ButtonL2.pressing())
-      l2=1;
-      else if(Controller1.ButtonL1.pressing())
-      l1=1;
-
+      
       double pre_angle_control=Motorhand.position(deg);
       if(pre_angle_control-ini_angle_control>0.5){
-        for(;pre_angle_control-ini_angle_control<60.0;pre_angle_control=Motorhand.position(deg))
-        {
+        //for(;pre_angle_control-ini_angle_control<60.0;pre_angle_control=Motorhand.position(deg))
+        //{
 
-          if (l1==1)
+          if (Controller1.ButtonL2.pressing()){
               Motorhand.spin(forward, 50, pct);//open
-          else if (l2==1)
+          }
+          else if (Controller1.ButtonL1.pressing())
               Motorhand.spin(reverse, 50, pct);//close 
-        } 
+        //} 
       }
 
       Motorhand.stop(hold);  
