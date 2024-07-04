@@ -4,12 +4,10 @@ using namespace vex;
 
 const double r = 4 / 2;      //半径
 const double propotion =  r; //  (m / rad)
-const double max_v = 200.0 / 60 * propotion * 2 * M_PI;
+const double max_v = 200.0 / 60 * propotion * 2 * M_PI;     //(m / s)
 const double T = 0.001;     //采样间隔
 //const double wheelbase = 11.97;   //底盘轴距
 const double tread = 12.13; //底盘轮距
-
-
 
 
 
@@ -43,7 +41,7 @@ void chassis::turn(double angle)
     double motor_pos = LeftMotorGroup.position(rev);   //起始时的电机位置
     double v = 0;    //控制的速度
 
-    while (fabs(error[0]*error[1]*error[2]) > 10e-8){
+    while (fabs(error[0]) > 10e-2 && fabs(v) > 10e-2){
         //更新误差值
         error[2] = error[1];
         error[1] = error[0];
@@ -51,10 +49,10 @@ void chassis::turn(double angle)
 
         v += (kp + ki + kd) * error[0] - (kp + 2 * kd) * error[1] + kd * error[2];
         if (v > max_v){
-            run(max_v, -max_v);
+            run(-max_v, max_v);
         }
         else{
-            run(v, -v);
+            run(-v, v);
         }
 
         //更新位置
@@ -79,7 +77,7 @@ void chassis::move(double distance)
     double motor_pos = LeftMotorGroup.position(rev);   //起始时的电机位置
     double v = 0;    //控制的速度
 
-    while (fabs(error[0]) > 10e-2 && fabs(v) < 10e-2){
+    while (fabs(error[0]) > 10e-2 && fabs(v) > 10e-2){
         //更新误差值
         error[2] = error[1];
         error[1] = error[0];
@@ -122,9 +120,9 @@ void chassis::record()
         right_motor[0] = RightMotorGroup.position(rev);
         v_right = propotion * (right_motor[0] - right_motor[1]);
 
-        co.x += sin(co.toward) * (v_left + v_right) / 2;
-        co.y += cos(co.toward) * (v_left + v_right) / 2;
-        co.toward += (-v_left + v_right) / 2 / tread;
+        co.x += sin(toward) * (v_left + v_right) / 2;
+        co.y += cos(toward) * (v_left + v_right) / 2;
+        toward += (-v_left + v_right) / 2 / tread;
 
         task::sleep(T * 1000);
     }
@@ -139,28 +137,52 @@ chassis::chassis(double x, double y, double toward)
 {
     co.x = x;
     co.y = y;
-    co.toward = toward;
+    toward = toward;
 }
 
 /*******************************************************************
 *函数名称：go_to
 *函数作用：移动到指定坐标
-*函数参量：x-目标位置的横坐标，y-目标位置的纵坐标
+*函数参量：x-目标位置的横坐标，y-目标位置的纵坐标，R为倒挡，默认为0，要倒车输入非0
 *********************************************************************/
-void chassis::go_to(double x, double y) 
+void chassis::go_to(double x, double y, int R = 0) 
 {
+    if (R){
+        toward += M_PI;
+    }
     //转动
-    double angle = atan((y - co.y) / (x - co.x));
-    while (angle - co.toward > M_PI) {
+    double target_angle;    //目标角度
+    //计算目标角度
+    if (co.y > 0) {
+        if (co.y == y){
+            target_angle = M_PI / 2;
+        }
+        else{
+            target_angle = atan((y - co.y) / (x - co.x)); 
+        }
+    }
+    else {
+        if (co.y == y){
+            target_angle = M_PI * 3 / 2;
+        }
+        else{
+            target_angle = atan((y - co.y) / (x - co.x)) + M_PI;; 
+        }
+    }
+
+    //计算要转的角度，范围为[-Π,Π]
+    double angle = target_angle - toward;   //要转的角度
+    if (angle> M_PI) {
         angle -= 2 * M_PI;
     }
-    turn(angle);
-    co.toward = angle;
+    else if(angle < -M_PI) {
+        angle += 2 * M_PI;
+    }
+    turn(angle);    //调旋转函数
 
     //前进
-    double distance = sqrt(pow((x - co.x), 2) + pow((y - co.y), 2));
+    double distance = sqrt(pow((x - co.x), 2) + pow((y - co.y), 2));    //前进的距离
     move(distance);
-    co.x = x, co.y = y;
 }
 
 /*******************************************************************
@@ -168,9 +190,9 @@ void chassis::go_to(double x, double y)
 *函数作用：获取当前坐标
 *函数参量：x-当前位置的横坐标，y-当前位置的纵坐标，toward当前朝向
 *********************************************************************/
-void chassis::position(double &x, double &y, double &toward)
+void chassis::position(double &x, double &y, double &now_toward)
 {
     x = co.x;
     y = co.y;
-    toward = co.toward;
+    now_toward = toward;
 }
