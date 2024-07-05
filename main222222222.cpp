@@ -26,16 +26,16 @@ const double angle_max=123.57;
 const double angle_min=1.0;
 const double angle_max_hand=60;
 bool have_taken=0;
-const double voltage_close=8000;
-const double voltage_keep=800;
+
+const double voltage_keep=20;
 
 //底盘移动，四个轮子对应电机
 void VRUN(double l,double r)
 {
-vexMotorVoltageSet(PORT8,l*120); //PORT为电机对应的端口
-vexMotorVoltageSet(PORT9,l*120);
-vexMotorVoltageSet(PORT10,r*120);
-vexMotorVoltageSet(PORT11,r*120);
+    vexMotorVoltageSet(PORT19, l * 120); //PORT为电机对应的端口
+    vexMotorVoltageSet(PORT11, r * 120);
+    vexMotorVoltageSet(PORT20, l * 120);    
+    vexMotorVoltageSet(PORT17, r * 120);
 }
 
 
@@ -84,7 +84,7 @@ void Usercontrol()
 
     double pre_angle_control=Motorhand.position(deg);
     //hand
-    Brain.Screen.printAt(10,80, "pre_angle = %f", pre_angle_control);
+    // Brain.Screen.printAt(10,80, "pre_angle = %f", pre_angle_control);
     if(Controller1.ButtonL2.pressing()&&fabs(pre_angle_control-ini_angle_control)<angle_max_hand)
     {
       if(pre_angle_control-ini_angle_control<50.0){
@@ -95,7 +95,8 @@ void Usercontrol()
     else if(Controller1.ButtonL1.pressing())
     {
       if(pre_angle_control-ini_angle_control>5.0){
-          vexMotorVoltageSet(PORT16,voltage_close);//传入电压   待定   //close
+          Motorhand.spin(reverse,30,pct); //close
+          vexMotorVoltageSet(PORT16,voltage_keep);
           have_taken=1;
       }
     }
