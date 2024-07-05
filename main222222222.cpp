@@ -18,8 +18,16 @@
 // ---- END VEXCODE CONFIGURED DEVICES ----
 
 #include "vex.h"
+#include"cmath"
 
 using namespace vex;
+
+const double angle_max=123.57;
+const double angle_min=1.0;
+const double angle_max_hand=60;
+bool have_taken=0;
+const double voltage_close=8000;
+const double voltage_keep=800;
 
 //底盘移动，四个轮子对应电机
 void VRUN(double l,double r)
@@ -31,10 +39,10 @@ vexMotorVoltageSet(PORT11,r*120);
 }
 
 
-void usercontrol()
+void Usercontrol()
 {
-  double ini_angle_control2=Motorarm.position(deg);//arm
-  double ini_angle_control=Motorhand.position(deg);//hand
+  double ini_angle_control2=Motorarm.position(deg);//init_arm
+  double ini_angle_control=Motorhand.position(deg);//init_hand
 
   while(1)
     {
@@ -60,66 +68,46 @@ void usercontrol()
 
     //按钮
     //arm
-    
-    if(Controller1.ButtonR2.pressing()||Controller1.ButtonR1.pressing())
-    {
-     
-      double pre_angle_control2=Motorarm.position(deg);
-
-      if(pre_angle_control2-ini_angle_control2>0.5){
-        //for(;pre_angle_control2-ini_angle_control2<130.0;pre_angle_control2=Motorarm.position(deg))
-        //{
-
-          if(Controller1.ButtonR2.pressing())
-          {
-            vexMotorVoltageSet(PORT18,10);
-            vexMotorVoltageSet(PORT13,10);
-
-            pre_angle_control2=Motorarm.position(deg);
-            if(pre_angle_control2-ini_angle_control2<130.0){
-              vexMotorVoltageSet(PORT18,0);
-              vexMotorVoltageSet(PORT13,0);
-            }
-              
-          }
-          else if(Controller1.ButtonR1.pressing())
-          {
-            vexMotorVoltageSet(PORT18,-10);
-            vexMotorVoltageSet(PORT13,-10);
-
-            pre_angle_control2=Motorarm.position(deg);
-            if(pre_angle_control2-ini_angle_control2<130.0){
-              vexMotorVoltageSet(PORT18,0);
-              vexMotorVoltageSet(PORT13,0);
-            }
-              
-          }
-        //}   
-      }   
-      Motorarm.stop(hold);  
+    double pre_angle_control2=Motorarm.position(deg);
+    // Brain.Screen.printAt(10,40, "init_angle = %f", ini_angle_control2);
+    // Brain.Screen.printAt(10,80, "pre_angle = %f", pre_angle_control2);
+    if(Controller1.ButtonR1.pressing()&&fabs(pre_angle_control2-ini_angle_control2)<angle_max*7)
+    {    
+       Motorarm.spin(forward,50,pct);//up
     }
+    else if(Controller1.ButtonR2.pressing()&&fabs(pre_angle_control2-ini_angle_control2)>angle_min*7)
+    {
+       Motorarm.spin(reverse,50,pct);//down
+    }
+    else   
+      Motorarm.stop(hold);
 
+    double pre_angle_control=Motorhand.position(deg);
     //hand
-    
-    if(Controller1.ButtonL1.pressing()||Controller1.ButtonL2.pressing())
+    Brain.Screen.printAt(10,80, "pre_angle = %f", pre_angle_control);
+    if(Controller1.ButtonL2.pressing()&&fabs(pre_angle_control-ini_angle_control)<angle_max_hand)
     {
-      
-      double pre_angle_control=Motorhand.position(deg);
-      if(pre_angle_control-ini_angle_control>0.5){
-        //for(;pre_angle_control-ini_angle_control<60.0;pre_angle_control=Motorhand.position(deg))
-        //{
-
-          if (Controller1.ButtonL2.pressing()){
-              Motorhand.spin(forward, 50, pct);//open
-          }
-          else if (Controller1.ButtonL1.pressing())
-              Motorhand.spin(reverse, 50, pct);//close 
-        //} 
+      if(pre_angle_control-ini_angle_control<50.0){
+          Motorhand.spin(forward,30,pct);//open
+          have_taken=0;
       }
-
-      Motorhand.stop(hold);  
     }
-  
+    else if(Controller1.ButtonL1.pressing())
+    {
+      if(pre_angle_control-ini_angle_control>5.0){
+          vexMotorVoltageSet(PORT16,voltage_close);//传入电压   待定   //close
+          have_taken=1;
+      }
+    }
+    else {
+      if(have_taken==0){
+        Motorhand.stop(hold);
+      }
+      else{
+        vexMotorVoltageSet(PORT16,voltage_keep);
+      }
+    }
+
   //微调位置
   if(Controller1.ButtonUp.pressing()){
     LeftMotorGroup.spin(forward,10,pct);
@@ -140,10 +128,4 @@ void usercontrol()
 
     task::sleep(8);//注意要sleep一小段时间防止过载
     }
-}
-int main() {
-  // Initializing Robot Configuration. DO NOT REMOVE!
-  vexcodeInit();
-
-  
 }
