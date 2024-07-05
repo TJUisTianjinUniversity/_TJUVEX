@@ -89,25 +89,36 @@ void Usercontrol()
     {
       if(pre_angle_control-ini_angle_control<50.0){
           Motorhand.spin(forward,30,pct);//open
-          have_taken=0;
+          //have_taken=0;
       }
     }
-    else if(Controller1.ButtonL1.pressing())
+
+     else if(Controller1.ButtonL1.pressing())
     {
       if(pre_angle_control-ini_angle_control>5.0){
-          Motorhand.spin(reverse,30,pct); //close
+          Motorhand.spin(reverse,20,pct);//close
           vexMotorVoltageSet(PORT16,voltage_keep);
-          have_taken=1;
       }
     }
-    else {
-      if(have_taken==0){
-        Motorhand.stop(hold);
-      }
-      else{
-        vexMotorVoltageSet(PORT16,voltage_keep);
-      }
-    }
+    else 
+      Motorhand.stop(hold);
+
+    // else if(Controller1.ButtonL1.pressing())
+    // {
+    //   if(pre_angle_control-ini_angle_control>5.0){
+    //       Motorhand.spin(reverse,30,pct); //close
+    //       vexMotorVoltageSet(PORT16,voltage_keep);
+    //       have_taken=1;
+    //   }
+    // }
+    // else {
+    //   if(have_taken==0){
+    //     Motorhand.stop(hold);
+    //   }
+    //   else{
+    //     vexMotorVoltageSet(PORT16,voltage_keep);
+    //   }
+    // }
 
   //微调位置
   if(Controller1.ButtonUp.pressing()){
