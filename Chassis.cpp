@@ -43,9 +43,12 @@ void chassis::turn(double angle)
     double integrate_angle = 0;
     double diff_angle = 0;
 
-    while (fabs(error_angle) > 10e-2 || fabs(v) > 10e-2){
-        Brain.Screen.printAt(10, 40, "error_angle = %f", error_angle);
-        Brain.Screen.printAt(10, 80, "chassis_angle = %f", chassis_angle);
+    while (fabs(error_angle) > 0.05 || fabs(v) > 0.05){
+        
+        Brain.Screen.printAt(10, 40, "angle = %f", angle);
+
+        Brain.Screen.printAt(10, 80, "error_angle = %f", error_angle);
+        Brain.Screen.printAt(10, 120, "chassis_angle = %f", chassis_angle);
         just_error_angle = error_angle;     //更新前一个误差值
         error_angle = angle - chassis_angle;    //更新误差值
         integrate_angle += error_angle * T;   //计算积分
@@ -55,14 +58,17 @@ void chassis::turn(double angle)
         
         //防止超速
         if (v > max_v){
-            run(-max_v, max_v);
+            v = max_v;
         }
-        else{
-            run(-v , v);
+        else if(v < -max_v){
+            v = -max_v;
         }
 
+        //转动
+        run(-v, v);
+
         //更新位置
-        chassis_angle = -propotion * (LeftMotorGroup.position(rev) - init_pos) / tread * 2;
+        chassis_angle = -propotion * (LeftMotorGroup.position(rev) - init_pos) / (tread / 2);
 
         //间隔
         task::sleep(T * 1000);
@@ -73,23 +79,25 @@ void chassis::turn(double angle)
 *函数名称：move
 *函数作用：向前行进指定的距离
 *函数参量：distance-距离
-*注意事项：distance是一个正数
+*注意事项：distance是正往前，是负往后
 *********************************************************************/
 void chassis::move(double distance)
 {
 
-    double kp = 2, ki = 0.1, kd = 0.1;   //PID的三个常量，明天一定改好
+    double kp = 2, ki = 0.2, kd = 0.1;   //PID的三个常量，明天一定改好
     double chassis_route = 0;     //初始位置定为0
-    double error_route = distance, just_error_route;   //误差值，和前一个误差值
+    double error_route = distance, just_error_route;   //距离的误差值，和前一个误差值
     double init_pos = LeftMotorGroup.position(rev);   //起始时的电机位置
     double v = 0;    //控制的速度
 
     double integrate_route = 0;
     double diff_route = 0;
 
-    while (fabs(error_route) > 10e-2 || fabs(v) > 10e-2){
-        Brain.Screen.printAt(10, 40, "error_angle = %f", error_route);
-        Brain.Screen.printAt(10, 80, "chassis_angle = %f", chassis_route);
+    while (fabs(error_route) > 1 || fabs(v) > 0.1){
+        Brain.Screen.printAt(10, 40, "init_pos = %f", init_pos);
+        Brain.Screen.printAt(10, 80, "motor_pos = %f", LeftMotorGroup.position(rev));
+        Brain.Screen.printAt(10, 120, "error_route = %f", error_route);
+        Brain.Screen.printAt(10, 160, "chassis_route = %f", chassis_route);
         just_error_route = error_route;     //更新前一个误差值
         error_route = distance - chassis_route;    //更新误差值
         integrate_route += error_route * T;   //计算积分
@@ -99,18 +107,21 @@ void chassis::move(double distance)
         
         //防止超速
         if (v > max_v){
-            run(max_v, max_v);
+            v = max_v;
         }
-        else{
-            run(v , v);
+        else if(v < -max_v){
+            v = -max_v;
         }
+        
+        run(v, v);
 
         //更新位置
-        chassis_route = propotion * (LeftMotorGroup.position(rev) - init_pos) / tread * 2;
+        chassis_route = propotion * (LeftMotorGroup.position(rev) - init_pos);
 
         //间隔
         task::sleep(T * 1000);
     }
+    // task::sleep(10000);  //暂停
 }
 
 /*******************************************************************
@@ -174,38 +185,44 @@ void chassis::go_to(double x, double y, int R)
     //转动
     double target_angle;    //目标角度
     //计算目标角度
-    if (y > 0) {
-        if (co.y == y){
+    if (x - co.x == 0){ //double很难相等，只是为了数学的严谨性
+        if (y - co.y > 0){
             target_angle = M_PI / 2;
         }
         else{
-            target_angle = atan((y - co.y) / (x - co.x)); 
+            target_angle = M_PI * 3 / 2; 
         }
     }
-    else {
-        if (co.y == y){
-            target_angle = M_PI * 3 / 2;
-        }
-        else{
-            target_angle = atan((y - co.y) / (x - co.x)) + M_PI;; 
+    else if (x - co.x > 0){      //[-Π / 2, Π / 2]
+            target_angle = atan((y - co.y) / (x - co.x));
+        if (y - co.y < 0){
+            target_angle += 2 * M_PI;
         }
     }
+    else{
+        target_angle = atan((y - co.y) / (x - co.x)) + M_PI;        
+    }
+
     //计算要转的角度，范围为[-Π,Π]
     double angle = target_angle - toward;   //要转的角度
-    if (angle> M_PI) {
-        angle -= 2 * M_PI;
+    while (angle> M_PI) {
+        angle -=  2 * M_PI;
     }
-    else if(angle < -M_PI) {
-        angle += 2 * M_PI;
+    while (angle < -M_PI) {
+        angle +=  2 * M_PI;
     }
+
     turn(angle);    //调旋转函数
     toward = target_angle;
-    Brain.Screen.printAt(0, 0, "angle = %f", angle);
+
     //前进
-    double distance = sqrt(pow((x - co.x), 2) + pow((y - co.y), 2));    //前进的距离
-    move(distance - distance_cal);
-    co.x = x - distance_cal - cos(toward);
-    co.y = y - distance_cal - sin(toward);
+    double distance = sqrt(pow((x - co.x), 2) + pow((y - co.y), 2)) - distance_cal;    //前进的距离
+    if (R){
+        distance = -distance;
+    }
+    move(distance);
+    co.x = x - (distance_cal * cos(toward));
+    co.y = y - (distance_cal * sin(toward));
 }
 
 /*******************************************************************
@@ -218,5 +235,60 @@ void chassis::position(double &x, double &y, double &now_toward)
     x = co.x;
     y = co.y;
     now_toward = toward;
+}
+
+void chassis::test()
+{
+    double motor_pos, just_motor_pos;
+    motor_pos = LeftMotorGroup.position(rev);
+    double v, just_v = 0;
+    double a;
+    double T = 0.001;
+    double propotion_max_v = 0;
+
+    while (1){
+        //基本的控制与计算
+        run(max_v, max_v);
+        just_motor_pos = motor_pos;
+        motor_pos = LeftMotorGroup.position(rev);
+        v = propotion * (motor_pos - just_motor_pos);
+        a = (v - just_v) / T;
+        task::sleep(T * 1000);
+        
+        //输出
+        if (fabs(v - propotion_max_v * max_v) < 0.1){
+            Brain.Screen.printAt(10, 40 + 100 * propotion_max_v, "v = %.2f, a = %.2f", v, a);
+            propotion_max_v += 0.1;
+        }
+
+        //到最大速度后退出
+        if (fabs(v - max_v) < 0.1){
+            task::sleep(100);   //保持0.1的最大速度
+            break;
+        }
+        
+    }
+
+    while (1){
+        //基本的控制与计算
+        run(0, 0);
+        just_motor_pos = motor_pos;
+        motor_pos = LeftMotorGroup.position(rev);
+        v = propotion * (motor_pos - just_motor_pos);
+        a = (v - just_v) / T;
+        task::sleep(T * 1000);
+        
+        //输出
+        if (fabs(v - propotion_max_v * max_v) < 0.1){
+            Brain.Screen.printAt(100, 40 + 100 * propotion_max_v, "v = %4.2f, a = %4.2f", v, a);
+            propotion_max_v -= 0.1;
+        }
+
+        //到最大速度后退出
+        if (fabs(v) < 0.1){
+            task::sleep(100);   //保持0.1的最大速度
+            break;
+        }
+    }
 }
 
