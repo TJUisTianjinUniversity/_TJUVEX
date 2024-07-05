@@ -11,7 +11,7 @@ void VRUN(double l, double r)
     vexMotorVoltageSet(PORT19, l * 120); //PORT为电机对应的端口
     vexMotorVoltageSet(PORT11, r * 120);
     vexMotorVoltageSet(PORT20, l * 120);    
-    vexMotorVoltageSet(PORT12, r * 120);
+    vexMotorVoltageSet(PORT17, r * 120);
 }
 void Usercontrol()
 {
@@ -59,12 +59,12 @@ void Usercontrol()
     double pre_angle_control=Motorhand.position(deg);
     //hand
     Brain.Screen.printAt(10,80, "pre_angle = %f", pre_angle_control);
-    if(Controller1.ButtonL1.pressing()&&fabs(pre_angle_control-ini_angle_control)<angle_max_hand)
+    if(Controller1.ButtonL2.pressing()&&fabs(pre_angle_control-ini_angle_control)<angle_max_hand)
     {
       if(pre_angle_control-ini_angle_control<50.0)
           Motorhand.spin(forward,30,pct);//open
     }
-    else if(Controller1.ButtonL2.pressing())
+    else if(Controller1.ButtonL1.pressing())
     {
       if(pre_angle_control-ini_angle_control>5.0)
           Motorhand.spin(reverse,20,pct);//close
