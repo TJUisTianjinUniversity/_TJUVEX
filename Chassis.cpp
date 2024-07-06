@@ -168,6 +168,7 @@ chassis::chassis(double x, double y, double now_toward)
     co.x = x;
     co.y = y;
     toward = now_toward;
+    distance_hand();
     // task t1(record);
 }
 
@@ -178,7 +179,7 @@ chassis::chassis(double x, double y, double now_toward)
 *********************************************************************/
 void chassis::go_to(double x, double y, int R, int mid_chassis) 
 {
-    
+    distance_hand();
     if (R){
         toward += M_PI;
     }
