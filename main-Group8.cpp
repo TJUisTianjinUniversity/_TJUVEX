@@ -22,26 +22,26 @@
 
 using namespace vex;
 DistanceController pid1;//定义的pid指针
-
+double distance_cal;
+const double angle_one=54.714;
 void Autocontrol()
 {
-  chassis c1(0, 0, 0);
-  c1.go_to(5, 5);
-  double pre_angle,error;
-  double ini_angle=Motorarm.position(deg);
-  double tar_angle=20.0+ini_angle;
-  while(true)
-  {
-    pre_angle=Motorarm.position(deg);
-    error=tar_angle-pre_angle;
-    if (fabs(error) > 5.0)
-      control_arms(tar_angle,pre_angle,UP,&pid1);
-    else
-    {
-      Motorarm.stop(hold);
-      break;
-    }
-  } 
+  const double div = 23;
+  static double ini_angle_max=Motorhand.position(deg);
+  distance_hand();
+  Motorhand.spin(reverse,35,pct);
+  task::sleep(500);  
+  control_arms(angle_one,UP,&pid1);
+  distance_hand();
+  chassis c1(3.5 * div, 0.5 * div, M_PI);
+  c1.go_to(0.5 * div, 0.5 * div);
+
+
+  task::sleep(500);   
+  control_hands(OPEN,ini_angle_max);
+  
+
+  
 }
 
 int main() {

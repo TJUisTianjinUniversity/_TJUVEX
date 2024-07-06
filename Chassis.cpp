@@ -2,7 +2,7 @@
 #include <cmath>
 using namespace vex;
 
-const double r = 4 / 2;      //半径
+const double r = 4 / 2 + 0.15;      //半径
 const double propotion =  2 * M_PI * r; //  (m / rev)
 const double max_v = 200.0 / 60 * propotion;     //(m / s)仅取理论最大值的四分之一
 const double T = 0.001;     //采样间隔
@@ -238,12 +238,6 @@ void chassis::position(double &x, double &y, double &now_toward)
     now_toward = toward;
 }
 
-void chassis::drag_to(double x, double y, double target_x, double target_y)
-{
-    go_to(target_x, target_y, 0, 1);
-    go_to(x, y);
-    go_to(target_x, target_y, 1, 0);
-}
 
 /*******************************************************************
 *函数名称：record

@@ -32,8 +32,8 @@ const double dt=0.001;
 struct DistanceController{
 	/* 控制因子 */
 	double Kp=2;
-	double Ki=0;
-	double Kd=0;
+	double Ki=0.1;
+	double Kd=0.2;
 
 	/* 设置极限 */
 	double limMin;
@@ -53,7 +53,8 @@ struct DistanceController{
 
 
 };
-void control_arms(double tar_angle,double pre_angle,int direction,DistanceController* spin_con);//控制机械臂
+void control_arms(double change_angle,int direction,DistanceController* spin_con);//控制机械臂
+void control_hands(int direction,double ini_angle_max);//控制爪子
 struct coordinate
 {
     /* data */
@@ -67,17 +68,15 @@ private:
   coordinate co;
   double toward;
   void run(double l, double r);
-  void turn(double angle);
-  void move(double distance);
-  void record();
+  double turn(double angle);
+  double move(double distance);
   
 public:
   chassis(double x, double y, double toward);
-  void go_to(double x, double y, int R = 0) ;
+  void go_to(double x, double y, int R = 0, int mid_chassis = 0) ;
   void position(double &x, double &y, double &toward);
 };
 
 void Usercontrol();
 void VRUN(double l, double r);
-
-double distance_cal;
+double distance_hand();
