@@ -109,13 +109,15 @@ double chassis::move(double distance)
     double integrate_route = 0;
     double diff_route = 0;
 
-    //调节左右电机转速的参数
+    //调节左右电机转速的变量
     double init_difference = LeftMotorGroup.position(rev) - RightMotorGroup.position(rev);
     double difference = 0;
     double difference_v = 0;
+    double difference_integrate = 0;
+    double just_difference = 0;
 
 
-    while (fabs(error_route) > 0.2){
+    while (fabs(error_route) > 0.1){
         just_v = v;     //更新T前的速度
         just_error_route = error_route;     //更新前一个误差值
         error_route = distance - chassis_route;    //更新误差值
@@ -123,7 +125,7 @@ double chassis::move(double distance)
         diff_route = (error_route - just_error_route) / T;    //计算微分
 
         v = kp * error_route + ki * integrate_route + kd * diff_route;  //PID算法计算速度
-        difference_v = kp * difference; //PID算法计算差速度
+        difference_v = kp * difference + 15000 * ki * difference_integrate + 10 * kd * (difference - just_difference) / T; //PID算法计算差速度
         
         //防止超速
         if (v > max_v){
@@ -144,8 +146,9 @@ double chassis::move(double distance)
         
         //更新位置
         chassis_route = propotion * (LeftMotorGroup.position(rev) - init_pos);
+        just_difference = difference;
         difference = propotion * (LeftMotorGroup.position(rev) - RightMotorGroup.position(rev) - init_difference);
-
+        difference_integrate += difference * T;
         //间隔
         task::sleep(T * 1000);
         Brain.Screen.printAt(0, 40, "error = %d", error_route);
@@ -222,6 +225,7 @@ void chassis::go_to(double x, double y, int R, int mid_chassis)
         distance -= distance_cal;
     }
     if (R){
+        toward -= M_PI;
         distance = -distance;
     }
     double actual_distance = move(distance);
