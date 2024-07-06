@@ -245,13 +245,6 @@ void chassis::position(double &x, double &y, double &now_toward)
     now_toward = toward;
 }
 
-void chassis::drag_to(double x, double y, double target_x, double target_y)
-{
-    go_to(target_x, target_y, 0, 1);
-    go_to(x, y);
-    go_to(target_x, target_y, 1, 0);
-}
-
 /*******************************************************************
 *函数名称：record
 *函数作用：记录此时的坐标和朝向
