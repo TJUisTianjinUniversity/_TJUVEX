@@ -2,7 +2,7 @@
 #include <cmath>
 using namespace vex;
 
-const double r = 4 / 2 + 0.15;      //半径
+const double r = 4 / 2;      //半径
 const double propotion =  2 * M_PI * r; //  (m / rev)
 const double max_v = 200.0 / 60 * propotion;     //(m / s)仅取理论最大值的四分之一
 const double T = 0.001;     //采样间隔
@@ -109,8 +109,13 @@ double chassis::move(double distance)
     double integrate_route = 0;
     double diff_route = 0;
 
+    //调节左右电机转速的参数
+    double init_difference = LeftMotorGroup.position(rev) - RightMotorGroup.position(rev);
+    double difference = 0;
+    double difference_v = 0;
+
+
     while (fabs(error_route) > 0.2){
-        Brain.Screen.printAt(10,40,"error = %f", error_route);
         just_v = v;     //更新T前的速度
         just_error_route = error_route;     //更新前一个误差值
         error_route = distance - chassis_route;    //更新误差值
@@ -118,6 +123,7 @@ double chassis::move(double distance)
         diff_route = (error_route - just_error_route) / T;    //计算微分
 
         v = kp * error_route + ki * integrate_route + kd * diff_route;  //PID算法计算速度
+        difference_v = kp * difference; //PID算法计算差速度
         
         //防止超速
         if (v > max_v){
@@ -134,10 +140,11 @@ double chassis::move(double distance)
             v = just_v - max_a * T;
         }
         
-        run(v, v);
+        run(v, v + difference_v);
         
         //更新位置
         chassis_route = propotion * (LeftMotorGroup.position(rev) - init_pos);
+        difference = propotion * (LeftMotorGroup.position(rev) - RightMotorGroup.position(rev) - init_difference);
 
         //间隔
         task::sleep(T * 1000);
@@ -238,6 +245,12 @@ void chassis::position(double &x, double &y, double &now_toward)
     now_toward = toward;
 }
 
+void chassis::drag_to(double x, double y, double target_x, double target_y)
+{
+    go_to(target_x, target_y, 0, 1);
+    go_to(x, y);
+    go_to(target_x, target_y, 1, 0);
+}
 
 /*******************************************************************
 *函数名称：record
