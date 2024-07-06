@@ -72,7 +72,7 @@ void autonomous(void) {
     c1.go_to(0.5 * div, 0.5 * div);
 
     task::sleep(500);
-    control_arms(10.0,UP,&pid1);   
+    control_arms(10.0,DOWN,&pid1);   
     control_hands(OPEN,ini_angle_max);
     task::sleep(500);   
 
