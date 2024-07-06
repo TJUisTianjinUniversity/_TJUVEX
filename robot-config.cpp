@@ -10,12 +10,12 @@ brain  Brain;
 // VEXcode device constructors
 controller Controller1 = controller(primary);
 motor LeftMotorGroupMotorA = motor(PORT19, ratio18_1, false);
-motor LeftMotorGroupMotorB = motor(PORT20, ratio18_1, false);
+motor LeftMotorGroupMotorB = motor(PORT18, ratio18_1, false);
 motor_group LeftMotorGroup = motor_group(LeftMotorGroupMotorA, LeftMotorGroupMotorB);
-motor RightMotorGroupMotorA = motor(PORT11, ratio18_1, true);
-motor RightMotorGroupMotorB = motor(PORT17, ratio18_1, true);
+motor RightMotorGroupMotorA = motor(PORT1, ratio18_1, true);
+motor RightMotorGroupMotorB = motor(PORT14, ratio18_1, true);
 motor_group RightMotorGroup = motor_group(RightMotorGroupMotorA, RightMotorGroupMotorB);
-motor MotorarmMotorA = motor(PORT18, ratio36_1, true);
+motor MotorarmMotorA = motor(PORT17, ratio36_1, true);
 motor MotorarmMotorB = motor(PORT13, ratio36_1, false);
 motor_group Motorarm = motor_group(MotorarmMotorA, MotorarmMotorB);
 motor Motorhand = motor(PORT16, ratio18_1, false);
